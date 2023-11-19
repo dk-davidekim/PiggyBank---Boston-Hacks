@@ -1,18 +1,43 @@
-function ItemBox({ item, price }) {
-  // Function to format price as currency
-  const formatCurrency = (amount) => {
-      return new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: 'USD',
-      }).format(amount);
-  };
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
-  return (
-      <div style={{ border: '1px solid black', padding: '10px', margin: '10px' }}>
-          <p>Item: {item}</p>
-          <p>Price: {formatCurrency(price)}</p>
-      </div>
-  );
-}
+const ItemBox = () => {
+    const [item, setItem] = useState('');
+    const [price, setPrice] = useState(0);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        // Fetch item and price from the backend
+        const fetchItemAndPrice = async () => {
+            try {
+                const itemResponse = await axios.get('http://localhost:8080/api/get-item');
+                const priceResponse = await axios.get('http://localhost:8080/api/get-price');
+
+                setItem(itemResponse.data.item || 'No item found');
+                setPrice(priceResponse.data.price || 0);
+            } catch (error) {
+                console.error('Error fetching item and price:', error);
+                setItem('Error loading item');
+                setPrice('Error loading price');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchItemAndPrice();
+    }, []);
+
+    if (isLoading) {
+        return <div>Loading...</div>;
+    }
+
+    return (
+        <div className="item-box">
+            <h2>Item Details</h2>
+            <p><strong>Item:</strong> {item}</p>
+            <p><strong>Price:</strong> ${price}</p>
+        </div>
+    );
+};
 
 export default ItemBox;

@@ -1,54 +1,59 @@
-function ChoreManager({ chores, onChoreUpdate }) {
-  const addChore = () => {
-      const newChore = { name: 'New Chore', compensation: 0, isComplete: false };
-      onChoreUpdate([...chores, newChore]);
-  };
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
-  const deleteChore = (index) => {
-      const updatedChores = chores.filter((_, i) => i !== index);
-      onChoreUpdate(updatedChores);
-  };
+const ChoreManager = () => {
+    const [chores, setChores] = useState([]);
+    const [newChoreName, setNewChoreName] = useState('');
+    const [newChoreCompensation, setNewChoreCompensation] = useState('');
 
-  const toggleChoreStatus = (index) => {
-      const updatedChores = chores.map((chore, i) =>
-          i === index ? { ...chore, isComplete: !chore.isComplete } : chore
-      );
-      onChoreUpdate(updatedChores);
-  };
+    useEffect(() => {
+        axios.get('http://localhost:8080/api/get-chores')
+            .then(response => setChores(response.data))
+            .catch(error => console.error('Error fetching chores:', error));
+    }, []);
 
-  const updateChoreField = (index, field, value) => {
-      const updatedChores = chores.map((chore, i) =>
-          i === index ? { ...chore, [field]: value } : chore
-      );
-      onChoreUpdate(updatedChores);
-  };
+    const handleAddChore = (e) => {
+        e.preventDefault();
+        axios.post('http://localhost:8080/api/insert-chore', { 
+            name: newChoreName, 
+            compensation: newChoreCompensation 
+        })
+        .then(() => {
+            setChores([...chores, { name: newChoreName, compensation: newChoreCompensation, isComplete: false }]);
+            setNewChoreName('');
+            setNewChoreCompensation('');
+        })
+        .catch(error => console.error('Error adding chore:', error));
+    };
 
-  return (
-      <div>
-          <h2>Manage Chores</h2>
-          {chores.map((chore, index) => (
-              <div key={`${chore.name}-${index}`}>
-                  <input
-                      type="text"
-                      value={chore.name}
-                      onChange={(e) => updateChoreField(index, 'name', e.target.value)}
-                  />
-                  <input
-                      type="number"
-                      value={chore.compensation}
-                      onChange={(e) => updateChoreField(index, 'compensation', parseFloat(e.target.value))}
-                  />
-                  <input
-                      type="checkbox"
-                      checked={chore.isComplete}
-                      onChange={() => toggleChoreStatus(index)}
-                  /> Completed
-                  <button onClick={() => deleteChore(index)}>Delete Chore</button>
-              </div>
-          ))}
-          <button onClick={addChore}>Add New Chore</button>
-      </div>
-  );
-}
+    return (
+        <div className="chore-manager">
+            <h2>Chore Manager</h2>
+            <ul>
+                {chores.map((chore, index) => (
+                    <li key={index}>
+                        {chore.name} - ${chore.compensation}
+                        <input type="checkbox" checked={chore.isComplete} readOnly />
+                    </li>
+                ))}
+            </ul>
+            <form onSubmit={handleAddChore}>
+                <input 
+                    type="text" 
+                    value={newChoreName} 
+                    onChange={(e) => setNewChoreName(e.target.value)} 
+                    placeholder="Chore name" 
+                />
+                <input 
+                    type="number" 
+                    value={newChoreCompensation} 
+                    onChange={(e) => setNewChoreCompensation(e.target.value)} 
+                    placeholder="Compensation" 
+                />
+                <button type="submit">Add Chore</button>
+            </form>
+        </div>
+    );
+};
 
 export default ChoreManager;

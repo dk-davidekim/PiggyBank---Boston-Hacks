@@ -8,6 +8,13 @@ function HomePage() {
 
   const handleRoleSelect = (selectedRole) => {
     setRole(selectedRole);
+    if (selectedRole === 'Parent') {
+      // Make an HTTP GET request to start the parent session
+      fetch('http://localhost:8080/api/start-parent-session')
+        .then(response => response.json())
+        .then(data => console.log(data.message))
+        .catch(error => console.error('Error:', error));
+    }
     navigate(`/${selectedRole.toLowerCase()}`);
   };
 

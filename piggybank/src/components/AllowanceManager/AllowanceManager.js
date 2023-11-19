@@ -1,31 +1,40 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
-function AllowanceManager({ allowance, onAllowanceChange }) {
-  const [newAllowance, setNewAllowance] = useState(allowance);
+const AllowanceManager = () => {
+    const [allowance, setAllowance] = useState(0);
+    const [newAllowance, setNewAllowance] = useState('');
 
-  useEffect(() => {
-      // Update local state when the allowance prop changes
-      setNewAllowance(allowance);
-  }, [allowance]);
+    useEffect(() => {
+        axios.get('http://localhost:8080/api/get-allowance')
+            .then(response => setAllowance(response.data.allowance))
+            .catch(error => console.error('Error fetching allowance:', error));
+    }, []);
 
-  const handleInputChange = (e) => {
-      // Parse the input value as a number
-      setNewAllowance(Number(e.target.value));
-  };
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        axios.post('http://localhost:8080/api/insert-allowance', { amount: newAllowance })
+            .then(() => {
+                setAllowance(newAllowance);
+                setNewAllowance('');
+            })
+            .catch(error => console.error('Error updating allowance:', error));
+    };
 
-  const handleSubmit = () => {
-      // Trigger the allowance change with the new allowance value
-      onAllowanceChange(newAllowance);
-  };
-
-  return (
-      <div>
-          <h2>Set Monthly Allowance</h2>
-          <input type="number" value={newAllowance} onChange={handleInputChange} />
-          <button onClick={handleSubmit}>Update Allowance</button>
-          <p>Current Allowance: ${allowance}</p>
-      </div>
-  );
-}
+    return (
+        <div className="allowance-manager">
+            <h2>Current Allowance: ${allowance}</h2>
+            <form onSubmit={handleSubmit}>
+                <input 
+                    type="number" 
+                    value={newAllowance} 
+                    onChange={(e) => setNewAllowance(e.target.value)} 
+                    placeholder="Set new allowance" 
+                />
+                <button type="submit">Update Allowance</button>
+            </form>
+        </div>
+    );
+};
 
 export default AllowanceManager;
