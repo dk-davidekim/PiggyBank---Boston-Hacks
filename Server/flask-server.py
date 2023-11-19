@@ -198,11 +198,11 @@ def mark_chore_complete():
 def get_item():
     try:
         with pool.connect() as conn:
-            result = conn.execute(
+            item = conn.execute(
                 sqlalchemy.text('SELECT item FROM SavingsGoal')
             ).scalar()
-            if result:
-                return jsonify({'item': result['item']})
+            if item:
+                return jsonify({'item': item})
             else:
                 return jsonify({'item': None})
     except Exception as e:
@@ -212,11 +212,11 @@ def get_item():
 def get_price():
     try:
         with pool.connect() as conn:
-            result = conn.execute(
+            price = conn.execute(
                 sqlalchemy.text('SELECT price FROM SavingsGoal')
             ).scalar()
-            if result:
-                return jsonify({'price': result['price']})
+            if price:
+                return jsonify({'price': price})
             else:
                 return jsonify({'price': None})
     except Exception as e:
