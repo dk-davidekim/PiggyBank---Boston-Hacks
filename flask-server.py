@@ -87,9 +87,20 @@ class DatabaseManager:
             )
         return sqlalchemy.create_engine("mysql+pymysql://", creator=getconn)
 
+messages = []
+
 def callback(message):
+    global messages
     print(f"Received message: {message.data.decode('utf-8')}")
+    messages.append(message.data.decode('utf-8'))
     message.ack()
+
+@app.route('/api/get-messages', methods=['GET'])
+def get_messages():
+    global messages
+    temp = messages.copy()
+    messages = []  # Clear messages after sending to the client
+    return jsonify(temp)
 
 # Initialize PubSubManager and DatabaseManager
 pubsub_manager = PubSubManager(PROJECT_ID, TOPIC_NAME, SUBSCRIPTION_NAME)
@@ -135,12 +146,33 @@ def gpt_chat():
     return jsonify({'response': response})
 
 # Flask Routes
-@app.route('/api/complete-chore', methods=['POST']) #Publisher
+@app.route('/api/complete-chore', methods=['POST'])
 def complete_chore():
     data = request.json
-    chore_name = data['choreName']
-    response = pubsub_manager.publish(chore_name)
-    return jsonify({'message': response})
+    chore_id = data.get('choreId')
+    if not chore_id:
+        return jsonify({'error': 'Missing choreId'}), 400
+    
+    try:
+        with pool.connect() as conn:
+            # Update chore status in the database
+            conn.execute(
+                sqlalchemy.text('UPDATE Chore SET status = TRUE WHERE id = :chore_id'), 
+                {'chore_id': chore_id}
+            )
+            conn.commit()  # Ensure the changes are committed
+
+            # Retrieve chore name for publishing
+            chore_name = conn.execute(
+                sqlalchemy.text('SELECT name FROM Chore WHERE id = :chore_id'), 
+                {'chore_id': chore_id}
+            ).scalar()
+            pubsub_manager.publish(chore_name)  # Publish chore completion
+
+        return jsonify({'message': 'Chore marked as completed'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/start-parent-session', methods=['GET']) #Subscriber
 def start_parent_session():
@@ -157,59 +189,83 @@ def start_parent_session():
 def insert_item():
     data = request.json
     try:
-        with pool.connect() as conn:
-            conn.execute(
-                sqlalchemy.text('INSERT INTO SavingsGoal (item, price) VALUES (:item, :price)'), 
-                {'item': data['item'], 'price': data['price']}
-            )
-            conn.commit()  # Commit the transaction
-        return jsonify({'message': 'Item added successfully'})
+        item = data.get('item')
+        price = data.get('price')
+        if item is not None and price is not None:
+            with pool.connect() as conn:
+                conn.execute(
+                    sqlalchemy.text('INSERT INTO SavingsGoal (item, price) VALUES (:item, :price)'), 
+                    {'item': item, 'price': price}
+                )
+                conn.commit()
+            return jsonify({'message': 'Item added successfully'})
+        else:
+            return jsonify({'error': 'Missing item or price data'}), 400
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
+        return jsonify({'error': 'An error occurred'}), 500
 
 @app.route('/api/insert-chore', methods=['POST'])
 def insert_chore():
     data = request.json
     try:
-        with pool.connect() as conn:
-            # status is set directly in the SQL command, no need to pass it as a parameter
-            conn.execute(
-                sqlalchemy.text('INSERT INTO Chore (name, compensation, status) VALUES (:name, :compensation, 0)'), 
-                {'name': data['name'], 'compensation': data['compensation']}
-            )
-            conn.commit()  # Commit the transaction
-        return jsonify({'message': 'Chore added successfully'})
+        name = data.get('name')
+        compensation = data.get('compensation')
+        if name is not None and compensation is not None:
+            with pool.connect() as conn:
+                conn.execute(
+                    sqlalchemy.text('INSERT INTO Chore (name, compensation, status) VALUES (:name, :compensation, 0)'), 
+                    {'name': name, 'compensation': compensation}
+                )
+                conn.commit()
+            return jsonify({'message': 'Chore added successfully'})
+        else:
+            return jsonify({'error': 'Missing name or compensation data'}), 400
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
+        return jsonify({'error': 'An error occurred'}), 500
 
 @app.route('/api/insert-allowance', methods=['POST'])
 def insert_allowance():
     data = request.json
     try:
-        with pool.connect() as conn:
-            conn.execute(
-                sqlalchemy.text('INSERT INTO Allowance (amount) VALUES (:amount)'), 
-                {'amount': data['amount']}
-            )
-            conn.commit()  # Commit the transaction
-        return jsonify({'message': 'Allowance added successfully'})
+        amount = data.get('amount')
+        if amount is not None:
+            with pool.connect() as conn:
+                conn.execute(
+                    sqlalchemy.text('INSERT INTO Allowance (amount) VALUES (:amount)'), 
+                    {'amount': amount}
+                )
+                conn.commit()
+            return jsonify({'message': 'Allowance added successfully'})
+        else:
+            return jsonify({'error': 'Missing amount data'}), 400
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'An error occurred'}), 500
 
 
 @app.route('/api/mark-chore-complete', methods=['POST'])
 def mark_chore_complete():
     data = request.json
-    chore_id = data['choreId']
-    with pool.connect() as conn:
-        conn.execute(
-            sqlalchemy.text('UPDATE Chore SET status = TRUE WHERE id = :chore_id'), 
-            {'chore_id': chore_id}
-        )
-    return jsonify({'message': 'Chore marked as completed'})
+    chore_id = data.get('choreId')
+    try:
+        with pool.connect() as conn:
+            conn.execute(
+                sqlalchemy.text('UPDATE Chore SET status = TRUE WHERE id = :chore_id'), 
+                {'chore_id': chore_id}
+            )
+            conn.commit()  # Ensure the changes are committed
+
+            # Publish a message to the topic
+            chore_name = conn.execute(
+                sqlalchemy.text('SELECT name FROM Chore WHERE id = :chore_id'), 
+                {'chore_id': chore_id}
+            ).scalar()
+            pubsub_manager.publish(chore_name)
+
+        return jsonify({'message': 'Chore marked as completed'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 
 @app.route('/api/get-item', methods=['GET'])
 def get_item():
@@ -245,7 +301,7 @@ def get_allowance():
     try:
         with pool.connect() as conn:
             allowance = conn.execute(
-                sqlalchemy.text('SELECT amount FROM Allowance')
+                sqlalchemy.text('SELECT amount FROM Allowance ORDER BY id DESC LIMIT 1')
             ).scalar() or 0
             return jsonify({'allowance': allowance})
     except Exception as e:

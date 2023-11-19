@@ -7,15 +7,26 @@ const AllowanceManager = () => {
 
     useEffect(() => {
         axios.get('http://localhost:8080/api/get-allowance')
-            .then(response => setAllowance(response.data.allowance))
+            .then(response => {
+                // Ensure the allowance is set as a number
+                setAllowance(Number(response.data.allowance));
+            })
             .catch(error => console.error('Error fetching allowance:', error));
     }, []);
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
         axios.post('http://localhost:8080/api/insert-allowance', { amount: newAllowance })
-            .then(() => {
-                setAllowance(newAllowance);
+            .then(response => {
+                // Update the allowance from the server response if available
+                // This assumes your server responds with the updated allowance
+                if (response.data && response.data.updatedAllowance) {
+                    setAllowance(Number(response.data.updatedAllowance));
+                } else {
+                    // Fallback to the local newAllowance value
+                    setAllowance(Number(newAllowance));
+                }
                 setNewAllowance('');
             })
             .catch(error => console.error('Error updating allowance:', error));

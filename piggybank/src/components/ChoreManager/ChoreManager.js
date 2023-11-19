@@ -26,6 +26,16 @@ const ChoreManager = () => {
         .catch(error => console.error('Error adding chore:', error));
     };
 
+    const handleCheckboxChange = (choreId) => {
+        axios.post('http://localhost:8080/api/mark-chore-complete', { choreId })
+            .then(() => {
+                setChores(chores.map(chore => 
+                    chore.id === choreId ? { ...chore, isComplete: true } : chore
+                ));
+            })
+            .catch(error => console.error('Error marking chore complete:', error));
+    };
+
     return (
         <div className="chore-manager">
             <h2>Chore Manager</h2>
@@ -33,7 +43,12 @@ const ChoreManager = () => {
                 {chores.map((chore, index) => (
                     <li key={index}>
                         {chore.name} - ${chore.compensation}
-                        <input type="checkbox" checked={chore.isComplete} readOnly />
+                        <input 
+                            type="checkbox" 
+                            checked={chore.isComplete} 
+                            onChange={() => handleCheckboxChange(chore.id)} 
+                            disabled={chore.isComplete}
+                        />
                     </li>
                 ))}
             </ul>

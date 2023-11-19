@@ -18,7 +18,7 @@ function ChatPage() {
 
     return (
         <div>
-            <h1>Chat with GPT</h1>
+            <h1>Chat with PiggyBank Teller</h1>
             <input 
                 type="text" 
                 value={item} 
