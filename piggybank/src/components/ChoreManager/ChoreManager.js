@@ -16,7 +16,7 @@ const ChoreManager = () => {
         e.preventDefault();
         axios.post('http://localhost:8080/api/insert-chore', { 
             name: newChoreName, 
-            compensation: newChoreCompensation 
+            compensation: parseFloat(newChoreCompensation) || 0 
         })
         .then(() => {
             setChores([...chores, { name: newChoreName, compensation: newChoreCompensation, isComplete: false }]);

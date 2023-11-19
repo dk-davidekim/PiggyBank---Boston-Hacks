@@ -1,18 +1,24 @@
 import React from 'react';
-import './Header.css'; // Make sure to create a corresponding CSS file for styles
-import logo from '../../logo.png';
+import { useLocation } from 'react-router-dom'; // Import useLocation
+import './Header.css'; // Adjust the path as necessary
+import logo from '../../logo.png'; // Adjust the path as necessary
 
 function Header() {
+  const location = useLocation(); // Get the current location
+
   return (
     <header className="header">
-      <img src={logo} alt="Logo" className="logo" />
-      {/* <nav>
+      <a href="/"><img src={logo} alt="Logo" className="logo" /></a>
+      <nav>
         <ul className="nav-links">
-          <li><a href="/">Home</a></li>
-          <li><a href="/about">About</a></li>
-          <li><a href="/contact">Contact</a></li>
+          {location.pathname === '/child' && (
+            <>
+              <li><a href="/chat">ChatBot</a></li>
+              <li><a href="/child">Savings</a></li>
+            </>
+          )}
         </ul>
-      </nav> */}
+      </nav>
     </header>
   );
 }

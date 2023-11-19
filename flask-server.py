@@ -162,6 +162,7 @@ def insert_item():
                 sqlalchemy.text('INSERT INTO SavingsGoal (item, price) VALUES (:item, :price)'), 
                 {'item': data['item'], 'price': data['price']}
             )
+            conn.commit()  # Commit the transaction
         return jsonify({'message': 'Item added successfully'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -172,13 +173,16 @@ def insert_chore():
     data = request.json
     try:
         with pool.connect() as conn:
+            # status is set directly in the SQL command, no need to pass it as a parameter
             conn.execute(
-                sqlalchemy.text('INSERT INTO Chore (name, compensation, status) VALUES (:name, :compensation, FALSE)'), 
+                sqlalchemy.text('INSERT INTO Chore (name, compensation, status) VALUES (:name, :compensation, 0)'), 
                 {'name': data['name'], 'compensation': data['compensation']}
             )
+            conn.commit()  # Commit the transaction
         return jsonify({'message': 'Chore added successfully'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 
 @app.route('/api/insert-allowance', methods=['POST'])
