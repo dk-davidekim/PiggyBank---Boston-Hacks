@@ -88,7 +88,14 @@ pool = db_manager.get_engine()
 
 # Flask Routes
 
-@app.route('/start-parent-session', methods=['GET'])
+@app.route('/complete-chore', methods=['POST']) #Publisher
+def complete_chore():
+    data = request.json
+    chore_name = data['choreName']
+    response = pubsub_manager.publish(chore_name)
+    return jsonify({'message': response})
+
+@app.route('/start-parent-session', methods=['GET']) #Subscriber
 def start_parent_session():
     def run_subscription():
         pubsub_manager.subscribe(callback)
