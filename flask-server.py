@@ -45,28 +45,17 @@ class PubSubManager:
         self.publisher = pubsub_v1.PublisherClient()
         self.subscriber = pubsub_v1.SubscriberClient()
 
-    def publish(self, chore_name):
+    def publish(self, message):
         topic_path = self.publisher.topic_path(self.project_id, self.topic_name)
-        message_json = json.dumps({'message': f'{chore_name} has been completed'})
+        message_json = json.dumps({'message': message})
         message_bytes = message_json.encode('utf-8')
-
-        try:
-            publish_future = self.publisher.publish(topic_path, data=message_bytes)
-            publish_future.result()  # Verify the publish succeeded
-            return 'Message published.'
-        except Exception as e:
-            return f'An error occurred: {e}'
+        publish_future = self.publisher.publish(topic_path, data=message_bytes)
+        publish_future.result()
 
     def subscribe(self, callback):
         subscription_path = self.subscriber.subscription_path(self.project_id, self.subscription_name)
         streaming_pull_future = self.subscriber.subscribe(subscription_path, callback=callback)
-        print(f"Listening for messages on {subscription_path}...\n")
-
-        try:
-            streaming_pull_future.result()
-        except KeyboardInterrupt:
-            streaming_pull_future.cancel()
-
+        streaming_pull_future.result()
 
 class DatabaseManager:
     def __init__(self, connection_string, db_user, db_password, db_name):
@@ -87,25 +76,48 @@ class DatabaseManager:
             )
         return sqlalchemy.create_engine("mysql+pymysql://", creator=getconn)
 
-messages = []
+messages = Queue()
 
 def callback(message):
-    global messages
-    print(f"Received message: {message.data.decode('utf-8')}")
-    messages.append(message.data.decode('utf-8'))
+    messages.put(message.data.decode('utf-8'))
     message.ack()
 
-@app.route('/api/get-messages', methods=['GET'])
-def get_messages():
-    global messages
-    temp = messages.copy()
-    messages = []  # Clear messages after sending to the client
-    return jsonify(temp)
-
-# Initialize PubSubManager and DatabaseManager
 pubsub_manager = PubSubManager(PROJECT_ID, TOPIC_NAME, SUBSCRIPTION_NAME)
 db_manager = DatabaseManager(DB_CONNECTION_STRING, DB_USER, DB_PASSWORD, DB_NAME)
 pool = db_manager.get_engine()
+
+@app.route('/api/complete-chore', methods=['POST'])
+def complete_chore():
+    data = request.json
+    chore_id = data.get('choreId')
+    if not chore_id:
+        return jsonify({'error': 'Missing choreId'}), 400
+    
+    with pool.connect() as conn:
+        conn.execute(
+            sqlalchemy.text('UPDATE Chore SET status = TRUE WHERE id = :chore_id'), 
+            {'chore_id': chore_id}
+        )
+        conn.commit()  
+
+        chore_name = conn.execute(
+            sqlalchemy.text('SELECT name FROM Chore WHERE id = :chore_id'), 
+            {'chore_id': chore_id}
+        ).scalar()
+        pubsub_manager.publish(chore_name)  
+
+    return jsonify({'message': 'Chore marked as completed'})
+
+@app.route('/api/start-parent-session', methods=['GET']) 
+def start_parent_session():
+    def run_subscription():
+        pubsub_manager.subscribe(callback)
+
+    thread = threading.Thread(target=run_subscription)
+    thread.daemon = True
+    thread.start()
+    return jsonify({'message': 'Parent session started and listening for messages'})
+
 
 def chat_with_gpt(item, description=None, model="gpt-3.5-turbo"):
     try:
@@ -145,45 +157,6 @@ def gpt_chat():
     response = chat_with_gpt(item, description)
     return jsonify({'response': response})
 
-# Flask Routes
-@app.route('/api/complete-chore', methods=['POST'])
-def complete_chore():
-    data = request.json
-    chore_id = data.get('choreId')
-    if not chore_id:
-        return jsonify({'error': 'Missing choreId'}), 400
-    
-    try:
-        with pool.connect() as conn:
-            # Update chore status in the database
-            conn.execute(
-                sqlalchemy.text('UPDATE Chore SET status = TRUE WHERE id = :chore_id'), 
-                {'chore_id': chore_id}
-            )
-            conn.commit()  # Ensure the changes are committed
-
-            # Retrieve chore name for publishing
-            chore_name = conn.execute(
-                sqlalchemy.text('SELECT name FROM Chore WHERE id = :chore_id'), 
-                {'chore_id': chore_id}
-            ).scalar()
-            pubsub_manager.publish(chore_name)  # Publish chore completion
-
-        return jsonify({'message': 'Chore marked as completed'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
-@app.route('/api/start-parent-session', methods=['GET']) #Subscriber
-def start_parent_session():
-    def run_subscription():
-        pubsub_manager.subscribe(callback)
-
-    # Starting the subscription in a background thread
-    thread = threading.Thread(target=run_subscription)
-    thread.daemon = True  # This ensures the thread closes when the main process ends
-    thread.start()
-    return jsonify({'message': 'Parent session started and listening for messages'})
 
 @app.route('/api/insert-item', methods=['POST'])
 def insert_item():
