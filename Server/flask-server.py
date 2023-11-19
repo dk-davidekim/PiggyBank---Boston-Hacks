@@ -10,16 +10,26 @@ from google.cloud import pubsub_v1
 from google.cloud.sql.connector import Connector
 from dotenv import load_dotenv
 
+from openai import OpenAI
+
+from flask_cors import CORS
+  
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
+
 
 # Database Configuration
 DB_CONNECTION_STRING = os.getenv('DB_CONNECTION_STRING')
 DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_NAME = os.getenv('DB_NAME')
+
+# OpenAI Configuration
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 # Pub/Sub Configuration
 PROJECT_ID = os.getenv('PROJECT_ID')
@@ -86,16 +96,53 @@ pubsub_manager = PubSubManager(PROJECT_ID, TOPIC_NAME, SUBSCRIPTION_NAME)
 db_manager = DatabaseManager(DB_CONNECTION_STRING, DB_USER, DB_PASSWORD, DB_NAME)
 pool = db_manager.get_engine()
 
-# Flask Routes
+def chat_with_gpt(item, description=None, model="gpt-3.5-turbo"):
+    try:
+        # Prepare the initial message about the item
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant, knowledgeable about shopping, pricing, and providing specific recommendations."},
+            {"role": "user", "content": f"I am a child planning to buy a {item}."}
+        ]
 
-@app.route('/complete-chore', methods=['POST']) #Publisher
+        # Add a detailed description message and a prompt for a specific price recommendation
+        if description:
+            messages.append({"role": "user", "content": f"It should be like this: {description}"})
+            messages.append({"role": "system", "content": f"Based on the description, provide a specific price recommendation for the {item}."})
+
+        # Call the OpenAI API
+        response = client.chat.completions.create(model=model, messages=messages)
+
+        # Process the response
+        if response.choices:
+            choice = response.choices[0]
+            if hasattr(choice, 'message') and hasattr(choice.message, 'content'):
+                return choice.message.content
+            else:
+                return "Sorry, I couldn't process that response."
+        else:
+            return "No response received from the API."
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return "Sorry, there was an error."
+
+@app.route('/api/gpt-chat', methods=['POST'])
+def gpt_chat():
+    data = request.json
+    item = data.get('item')
+    description = data.get('description', None)
+    response = chat_with_gpt(item, description)
+    return jsonify({'response': response})
+
+# Flask Routes
+@app.route('/api/complete-chore', methods=['POST']) #Publisher
 def complete_chore():
     data = request.json
     chore_name = data['choreName']
     response = pubsub_manager.publish(chore_name)
     return jsonify({'message': response})
 
-@app.route('/start-parent-session', methods=['GET']) #Subscriber
+@app.route('/api/start-parent-session', methods=['GET']) #Subscriber
 def start_parent_session():
     def run_subscription():
         pubsub_manager.subscribe(callback)
@@ -106,7 +153,7 @@ def start_parent_session():
     thread.start()
     return jsonify({'message': 'Parent session started and listening for messages'})
 
-@app.route('/insert-item', methods=['POST'])
+@app.route('/api/insert-item', methods=['POST'])
 def insert_item():
     data = request.json
     with pool.connect() as conn:
@@ -116,15 +163,17 @@ def insert_item():
         )
     return jsonify({'message': 'Item added successfully'})
 
-@app.route('/get-item', methods=['GET'])
-def get_item():
+@app.route('/api/insert-chore', methods=['POST'])
+def insert_chore():
+    data = request.json
     with pool.connect() as conn:
-        result = conn.execute(
-            sqlalchemy.text('SELECT item, price FROM SavingsGoal')
-        ).fetchone()
-    return jsonify(dict(result))
+        conn.execute(
+            sqlalchemy.text('INSERT INTO Chore (name, compensation, status) VALUES (:name, :compensation, FALSE)'), 
+            {'name': data['name'], 'compensation': data['compensation']}
+        )
+    return jsonify({'message': 'Chore added successfully'})
 
-@app.route('/insert-allowance', methods=['POST'])
+@app.route('/api/insert-allowance', methods=['POST'])
 def insert_allowance():
     data = request.json
     with pool.connect() as conn:
@@ -134,43 +183,85 @@ def insert_allowance():
         )
     return jsonify({'message': 'Allowance added successfully'})
 
-@app.route('/get-allowance', methods=['GET'])
-def get_allowance():
-    with pool.connect() as conn:
-        result = conn.execute(
-            sqlalchemy.text('SELECT amount FROM Allowance')
-        ).fetchone()
-    return jsonify({'allowance': result['amount'] if result else 0})
-
-@app.route('/insert-chore', methods=['POST'])
-def insert_chore():
+@app.route('/api/mark-chore-complete', methods=['POST'])
+def mark_chore_complete():
     data = request.json
+    chore_id = data['choreId']
     with pool.connect() as conn:
         conn.execute(
-            sqlalchemy.text('INSERT INTO Chore (name, compensation) VALUES (:name, :compensation)'), 
-            {'name': data['name'], 'compensation': data['compensation']}
+            sqlalchemy.text('UPDATE Chore SET status = TRUE WHERE id = :chore_id'), 
+            {'chore_id': chore_id}
         )
-    return jsonify({'message': 'Chore added successfully'})
+    return jsonify({'message': 'Chore marked as completed'})
 
-@app.route('/get-chores', methods=['GET'])
+@app.route('/api/get-item', methods=['GET'])
+def get_item():
+    try:
+        with pool.connect() as conn:
+            result = conn.execute(
+                sqlalchemy.text('SELECT item FROM SavingsGoal')
+            ).scalar()
+            if result:
+                return jsonify({'item': result['item']})
+            else:
+                return jsonify({'item': None})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/get-price', methods=['GET'])
+def get_price():
+    try:
+        with pool.connect() as conn:
+            result = conn.execute(
+                sqlalchemy.text('SELECT price FROM SavingsGoal')
+            ).scalar()
+            if result:
+                return jsonify({'price': result['price']})
+            else:
+                return jsonify({'price': None})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/get-allowance', methods=['GET'])
+def get_allowance():
+    try:
+        with pool.connect() as conn:
+            allowance = conn.execute(
+                sqlalchemy.text('SELECT amount FROM Allowance')
+            ).scalar() or 0
+            return jsonify({'allowance': allowance})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/get-chores', methods=['GET'])
 def get_chores():
-    with pool.connect() as conn:
-        chores = conn.execute(
-            sqlalchemy.text('SELECT name, compensation FROM Chore')
-        ).fetchall()
-    return jsonify([dict(row) for row in chores])
+    try:
+        with pool.connect() as conn:
+            chores = conn.execute(
+                sqlalchemy.text('SELECT id, name, compensation, status FROM Chore')
+            ).fetchall()
+            return jsonify([{'id': chore['id'], 'name': chore['name'], 
+                            'compensation': float(chore['compensation']), 
+                            'isComplete': chore['status']} for chore in chores])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
-@app.route('/get-total-balance', methods=['GET'])
+
+@app.route('/api/get-total-balance', methods=['GET'])
 def get_total_balance():
-    with pool.connect() as conn:
-        total_compensation = conn.execute(
-            sqlalchemy.text('SELECT SUM(compensation) FROM Chore WHERE status = TRUE')
-        ).scalar() or 0
-        allowance = conn.execute(
-            sqlalchemy.text('SELECT amount FROM Allowance ORDER BY id DESC LIMIT 1')
-        ).scalar() or 0
-        total_balance = total_compensation + allowance
-    return jsonify({'total_balance': total_balance})
+    try:
+        with pool.connect() as conn:
+            total_compensation = conn.execute(
+                sqlalchemy.text('SELECT SUM(compensation) FROM Chore WHERE status = TRUE')
+            ).scalar() or 0
+            allowance = conn.execute(
+                sqlalchemy.text('SELECT amount FROM Allowance ORDER BY id DESC LIMIT 1')
+            ).scalar() or 0
+            total_balance = total_compensation + allowance
+            return jsonify({'total_balance': total_balance})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=8080)
