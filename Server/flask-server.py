@@ -1,35 +1,103 @@
-from flask import Flask, request, jsonify
+# Standard library imports
 import os
-from google.cloud.sql.connector import Connector
+import json
+import threading
+
+# Third-party imports
+from flask import Flask, request, jsonify
 import sqlalchemy
+from google.cloud import pubsub_v1
+from google.cloud.sql.connector import Connector
 from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
 
-load_dotenv()
-
-# Retrieve environment variables
+# Database Configuration
 DB_CONNECTION_STRING = os.getenv('DB_CONNECTION_STRING')
 DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_NAME = os.getenv('DB_NAME')
 
-connector = Connector()
+# Pub/Sub Configuration
+PROJECT_ID = os.getenv('PROJECT_ID')
+TOPIC_NAME = os.getenv('TOPIC_NAME')
+SUBSCRIPTION_NAME = os.getenv('SUBSCRIPTION_NAME')
 
-def getconn():
-    conn = connector.connect(
-        DB_CONNECTION_STRING,
-        "pymysql",
-        user=DB_USER,
-        password=DB_PASSWORD,
-        db=DB_NAME
-    )
-    return conn
 
-pool = sqlalchemy.create_engine(
-    "mysql+pymysql://",
-    creator=getconn,
-)
+class PubSubManager:
+    def __init__(self, project_id, topic_name, subscription_name):
+        self.project_id = project_id
+        self.topic_name = topic_name
+        self.subscription_name = subscription_name
+        self.publisher = pubsub_v1.PublisherClient()
+        self.subscriber = pubsub_v1.SubscriberClient()
+
+    def publish(self, chore_name):
+        topic_path = self.publisher.topic_path(self.project_id, self.topic_name)
+        message_json = json.dumps({'message': f'{chore_name} has been completed'})
+        message_bytes = message_json.encode('utf-8')
+
+        try:
+            publish_future = self.publisher.publish(topic_path, data=message_bytes)
+            publish_future.result()  # Verify the publish succeeded
+            return 'Message published.'
+        except Exception as e:
+            return f'An error occurred: {e}'
+
+    def subscribe(self, callback):
+        subscription_path = self.subscriber.subscription_path(self.project_id, self.subscription_name)
+        streaming_pull_future = self.subscriber.subscribe(subscription_path, callback=callback)
+        print(f"Listening for messages on {subscription_path}...\n")
+
+        try:
+            streaming_pull_future.result()
+        except KeyboardInterrupt:
+            streaming_pull_future.cancel()
+
+
+class DatabaseManager:
+    def __init__(self, connection_string, db_user, db_password, db_name):
+        self.connection_string = connection_string
+        self.db_user = db_user
+        self.db_password = db_password
+        self.db_name = db_name
+        self.connector = Connector()
+
+    def get_engine(self):
+        def getconn():
+            return self.connector.connect(
+                self.connection_string,
+                "pymysql",
+                user=self.db_user,
+                password=self.db_password,
+                db=self.db_name
+            )
+        return sqlalchemy.create_engine("mysql+pymysql://", creator=getconn)
+
+def callback(message):
+    print(f"Received message: {message.data.decode('utf-8')}")
+    message.ack()
+
+# Initialize PubSubManager and DatabaseManager
+pubsub_manager = PubSubManager(PROJECT_ID, TOPIC_NAME, SUBSCRIPTION_NAME)
+db_manager = DatabaseManager(DB_CONNECTION_STRING, DB_USER, DB_PASSWORD, DB_NAME)
+pool = db_manager.get_engine()
+
+# Flask Routes
+
+@app.route('/start-parent-session', methods=['GET'])
+def start_parent_session():
+    def run_subscription():
+        pubsub_manager.subscribe(callback)
+
+    # Starting the subscription in a background thread
+    thread = threading.Thread(target=run_subscription)
+    thread.daemon = True  # This ensures the thread closes when the main process ends
+    thread.start()
+    return jsonify({'message': 'Parent session started and listening for messages'})
 
 @app.route('/insert-item', methods=['POST'])
 def insert_item():
@@ -63,7 +131,7 @@ def insert_allowance():
 def get_allowance():
     with pool.connect() as conn:
         result = conn.execute(
-            sqlalchemy.text('SELECT amount FROM Allowance ORDER BY id DESC LIMIT 1')
+            sqlalchemy.text('SELECT amount FROM Allowance')
         ).fetchone()
     return jsonify({'allowance': result['amount'] if result else 0})
 
