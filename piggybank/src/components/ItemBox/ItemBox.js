@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import './ItemBox.css';
 
 const ItemBox = () => {
     const [item, setItem] = useState('');

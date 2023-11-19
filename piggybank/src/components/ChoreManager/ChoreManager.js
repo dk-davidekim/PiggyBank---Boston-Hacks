@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import './ChoreManager.css';
 
 const ChoreManager = () => {
     const [chores, setChores] = useState([]);

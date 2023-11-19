@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './HomePage.css'; // Import your CSS for styling
+import '../../this.png'
 
 function HomePage() {
   const [role, setRole] = useState('');

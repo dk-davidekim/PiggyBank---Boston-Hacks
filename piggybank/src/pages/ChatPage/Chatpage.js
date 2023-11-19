@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './ChatPage.css';
 
 function ChatPage() {
     const [item, setItem] = useState('');

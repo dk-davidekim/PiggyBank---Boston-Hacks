@@ -1,0 +1,48 @@
+/* Add this class to the parent container of your Recharts component */
+.chart-container {
+    display: flex;
+    justify-content: center; /* Centers horizontally */
+    align-items: center; /* Centers vertically if container has a specific height */
+    height: 100%; /* Set to the height of the container, or remove if not needed */
+  }
+  
+  /* Existing styles */
+  .recharts-wrapper {
+    font-family: 'Poppins', sans-serif;
+    background-color: #72929c;
+    border-radius: 20px;
+    box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-top: 20px;
+    /* Add width and auto margin to center the chart itself if needed */
+    width: fit-content;
+    margin: auto;
+  }
+  
+  
+  .recharts-cartesian-axis-tick-value {
+    fill: #4a4545; /* Dark grey for better readability */
+  }
+  
+  .recharts-text {
+    fill: #5d5d5d; /* Dark grey for better readability */
+  }
+  
+  .recharts-line .recharts-curve {
+    stroke-width: 3px;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  
+  .recharts-reference-line line {
+    stroke-dasharray: 5 5;
+  }
+  
+  .recharts-tooltip-wrapper {
+    background-color: white;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.2);
+    border: 1px solid #ddd;
+  }
+  

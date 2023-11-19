@@ -1,0 +1,26 @@
+/* ItemBox.css */
+.item-box {
+    background-color: #ebd897; /* A bright yellow background */
+    padding: 20px; /* Padding around the content */
+    border-radius: 15px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+    margin: 20px 0; /* Margin for spacing */
+    font-family: 'Poppins', sans-serif; /* Friendly, readable font */
+    color: #333; /* Dark text for readability */
+    text-align: center; /* Centering the text */
+  }
+  
+  .item-box h2 {
+    color: #4A148C; /* A deep purple for the heading */
+    margin-bottom: 15px; /* Spacing below the heading */
+  }
+  
+  .item-box p {
+    font-size: 16px; /* A slightly larger font size for readability */
+    margin: 10px 0; /* Spacing between paragraphs */
+  }
+  
+  .item-box strong {
+    color: #2E7D32; /* A rich green for emphasis */
+  }
+  

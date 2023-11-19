@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import './Balance.css';
 
 const Balance = () => {
     const [balance, setBalance] = useState(0);

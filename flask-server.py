@@ -9,6 +9,8 @@ import sqlalchemy
 from google.cloud import pubsub_v1
 from google.cloud.sql.connector import Connector
 from dotenv import load_dotenv
+from queue import Queue
+
 
 from openai import OpenAI
 
