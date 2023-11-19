@@ -1,5 +1,8 @@
 # team561 - - Boston Hacks - 2023 Hackathon - Nov. 18-19
 
+## DEMO VIDEO
+[https://youtu.be/OHnjBOKQMy0?si=SQmDDDXD-YJoF03l]
+
 ## Inspiration
 Our project with 'Digital Dreamers' finds its roots in the simple memories of childhood, when a new gaming console, action figure, or pair of sneakers was released. However, as a kid, your only source of income came from your parents: the money they gave you as an allowance, and the money they gave you to do chores (if any!). The anticipation and excitement of saving every penny towards that dream was a common experience amongst our team. Those experiences taught us the value of patience, the joy of earning, and the satisfaction of achieving a goal. We wanted to digitalize that experience in an app that supports both the parent and child side.
 
