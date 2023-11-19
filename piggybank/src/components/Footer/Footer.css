@@ -1,10 +1,10 @@
 .footer {
-    background-color: #90EE90;
-    color: black;
-    text-align: center;
-    padding: 20px 0;
-    position: fixed;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-  }
+  background-color: #90EE90; /* Light green background */
+  color: black; /* Text color */
+  text-align: center; /* Align text to the center */
+  padding: 20px 0; /* Padding above and below the text */
+  position: absolute; /* Position absolute will place the footer relative to its nearest positioned ancestor or to the initial containing block */
+  left: 0; /* Align to the left of the page */
+  bottom: -50; /* Align to the bottom of the page */
+  width: 100%; /* Stretch across the full width of the page */
+}

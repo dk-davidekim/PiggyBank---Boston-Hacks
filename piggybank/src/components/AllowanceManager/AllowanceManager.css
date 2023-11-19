@@ -1,0 +1,46 @@
+/* AllowanceManager.css */
+.allowance-manager {
+  background-color: #81C784; /* Light green background */
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  margin: 20px 0;
+  font-family: 'Poppins', sans-serif;
+  color: #333;
+  text-align: center;
+}
+
+.allowance-manager h2 {
+  color: #1A237E; /* Deep blue for the heading */
+  margin-bottom: 15px;
+}
+
+.allowance-manager form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.allowance-manager input {
+  font-size: 16px;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 2px solid #4FC3F7; /* Light blue border */
+  border-radius: 10px;
+  width: 80%;
+  max-width: 300px;
+}
+
+.allowance-manager button {
+  background-color: #FF8A65; /* Coral color */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.allowance-manager button:hover {
+  background-color: #FF7043; /* Darker shade for hover */
+}

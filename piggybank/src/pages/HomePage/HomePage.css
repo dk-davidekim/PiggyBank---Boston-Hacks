@@ -1,0 +1,70 @@
+/* ChoreList.css */
+.chore-list {
+  background-color: #fff8dc; /* Soft background color */
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
+  max-width: 500px;
+}
+
+.chore-list h2 {
+  color: #333;
+  text-align: center;
+  margin-bottom: 16px;
+  font-size: 24px;
+}
+
+.chore-list ul {
+  list-style: none;
+  padding: 0;
+}
+
+.chore-list li {
+  background: #f0ead6; /* Light background for each list item */
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  transition: background-color 0.3s; /* Smooth background color transition */
+}
+
+/* Hover effect for list items */
+.chore-list li:hover {
+  background-color: #e8e2c9; /* Slightly darker background on hover */
+}
+
+.chore-list li:last-child {
+  margin-bottom: 0;
+}
+
+.chore-list input[type='checkbox'] {
+  margin-left: 10px;
+  cursor: pointer; /* Cursor pointer for better indication of interactiveness */
+}
+
+/* Accessibility and visual cue for focus state */
+.chore-list input[type='checkbox']:focus {
+  outline: 2px solid #4d90fe; /* Blue outline to indicate focus */
+}
+
+/* Style for checked items */
+.chore-list input[type='checkbox']:checked + label {
+  text-decoration: line-through;
+  color: #aaa;
+}
+
+/* Increase the clickable area for checkboxes */
+.chore-list label {
+  cursor: pointer;
+  padding: 5px; /* Increase the padding to make it easier to click or tap */
+}
+
+/* Visual cue for checkboxes on hover and focus */
+.chore-list input[type='checkbox']:hover + label,
+.chore-list input[type='checkbox']:focus + label {
+  background-color: #f5f5f5; /* Light background for label on hover/focus */
+}

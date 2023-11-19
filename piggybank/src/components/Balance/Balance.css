@@ -1,0 +1,22 @@
+/* Balance.css */
+.balance-box {
+  background-color: hsla(46, 27%, 88%, 0.713); /* Vivid yellow background */
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(26, 24, 24, 0.15);
+  margin: 20px 0;
+  font-family: 'Poppins', sans-serif;
+  color: #aba8a8; /* Dark text for contrast */
+  text-align: center;
+}
+
+.balance-box h2 {
+  color: #6A1B9A; /* Deep purple for the heading */
+  margin-bottom: 15px;
+}
+
+.balance-box p {
+  font-size: 24px; /* Larger font size for the balance */
+  font-weight: bold;
+  margin: 5px 0;
+}
