@@ -1,4 +1,4 @@
-# team561 - - Boston Hacks - 2023 Hackathon - Nov. 18-19
+# PiggyBank - Capital One Best Financial Hack Winner - Boston Hacks 2023 Hackathon - Nov. 18-19
 
 ## DEMO VIDEO
 [https://youtu.be/OHnjBOKQMy0?si=SQmDDDXD-YJoF03l]
