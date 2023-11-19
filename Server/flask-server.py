@@ -120,7 +120,7 @@ def insert_item():
 def get_item():
     with pool.connect() as conn:
         result = conn.execute(
-            sqlalchemy.text('SELECT item, price FROM SavingsGoal ORDER BY id DESC LIMIT 1')
+            sqlalchemy.text('SELECT item, price FROM SavingsGoal')
         ).fetchone()
     return jsonify(dict(result))
 
