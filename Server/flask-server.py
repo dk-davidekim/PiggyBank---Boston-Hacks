@@ -63,6 +63,15 @@ def insert_allowance():
         )
     return jsonify({'message': 'Allowance added successfully'})
 
+@app.route('/get-allowance', methods=['GET'])
+def get_allowance():
+    with pool.connect() as conn:
+        result = conn.execute(
+            'SELECT amount FROM Allowance ORDER BY id DESC LIMIT 1'
+        ).fetchone()
+    return jsonify({'allowance': result['amount'] if result else 0})
+
+
 @app.route('/insert-chore', methods=['POST'])
 def insert_chore():
     data = request.json
