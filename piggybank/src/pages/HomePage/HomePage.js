@@ -20,9 +20,14 @@ function HomePage() {
 
   return (
     <div className="home-page">
-      <h1>Welcome! Please select your role:</h1>
-      <button onClick={() => handleRoleSelect('Parent')}>Parent</button>
-      <button onClick={() => handleRoleSelect('Child')}>Child</button>
+      <div className="text-content">
+        <h1>What Kind of Piggy are You?:</h1>
+        <button onClick={() => handleRoleSelect('Parent')}>Parent</button>
+        <button onClick={() => handleRoleSelect('Child')}>Child</button>
+      </div>
+      <div className="image-content">
+        {/* This div will contain the background image */}
+      </div>
     </div>
   );
 }

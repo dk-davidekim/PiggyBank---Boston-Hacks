@@ -1,70 +1,47 @@
-/* ChoreList.css */
-.chore-list {
-  background-color: #fff8dc; /* Soft background color */
-  border-radius: 8px;
-  padding: 20px;
-  margin: 20px auto;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
-  max-width: 500px;
-}
-
-.chore-list h2 {
-  color: #333;
-  text-align: center;
-  margin-bottom: 16px;
-  font-size: 24px;
-}
-
-.chore-list ul {
-  list-style: none;
-  padding: 0;
-}
-
-.chore-list li {
-  background: #f0ead6; /* Light background for each list item */
-  margin-bottom: 10px;
-  padding: 10px;
-  border-radius: 8px;
+/* HomePage.css */
+.home-page {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
-  transition: background-color 0.3s; /* Smooth background color transition */
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  margin: 40;
 }
 
-/* Hover effect for list items */
-.chore-list li:hover {
-  background-color: #e8e2c9; /* Slightly darker background on hover */
+.text-content {
+  margin-bottom: 20px; /* Spacing between text and image */
 }
 
-.chore-list li:last-child {
-  margin-bottom: 0;
+.image-content {
+  background-image: url('../../this.png'); /* Update with correct path */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  width: 100%;
+  height: 800px; /* Adjust height as needed */
 }
 
-.chore-list input[type='checkbox'] {
-  margin-left: 10px;
-  cursor: pointer; /* Cursor pointer for better indication of interactiveness */
-}
-
-/* Accessibility and visual cue for focus state */
-.chore-list input[type='checkbox']:focus {
-  outline: 2px solid #4d90fe; /* Blue outline to indicate focus */
-}
-
-/* Style for checked items */
-.chore-list input[type='checkbox']:checked + label {
-  text-decoration: line-through;
-  color: #aaa;
-}
-
-/* Increase the clickable area for checkboxes */
-.chore-list label {
+.home-page button {
+  padding: 10px 20px;
+  margin: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: #4CAF50;
+  color: white;
+  font-size: 1em;
   cursor: pointer;
-  padding: 5px; /* Increase the padding to make it easier to click or tap */
+  transition: background-color 0.3s;
 }
 
-/* Visual cue for checkboxes on hover and focus */
-.chore-list input[type='checkbox']:hover + label,
-.chore-list input[type='checkbox']:focus + label {
-  background-color: #f5f5f5; /* Light background for label on hover/focus */
+.home-page button:hover {
+  background-color: #388E3C;
+  text-align: center;
 }
+
+.home-page h1 {
+  color: #436687ff;
+  font-size: 2.5em;
+  text-align: center;
+}
+
