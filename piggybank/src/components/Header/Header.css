@@ -1,0 +1,43 @@
+.header {
+    background-color: #90EE90; /* Baby blue color */
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Center items horizontally */
+  }
+  
+  .logo {
+    height: 70px; /* Adjust size as needed */
+    width: auto;
+  }
+  
+  /* Flexbox for aligning navigation and logo */
+  .nav-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .nav-links {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    margin: 0;
+  }
+  
+  .nav-links li {
+    margin: 0 10px;
+  }
+  
+  .nav-links a {
+    color: white;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+  
+  .nav-links a:hover {
+    color: #ddd;
+  }
+  
