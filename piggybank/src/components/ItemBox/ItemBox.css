@@ -1,0 +1,25 @@
+.item-box {
+    background-color: #ebd897;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    margin: 20px 0;
+    font-family: 'Poppins', sans-serif;
+    color: #333;
+    text-align: center;
+  }
+  
+  .item-box h2 {
+    color: #4A148C;
+    margin-bottom: 15px;
+  }
+  
+  .item-box p {
+    font-size: 16px;
+    margin: 10px 0;
+  }
+  
+  .item-box strong {
+    color: #2E7D32;
+  }
+  
