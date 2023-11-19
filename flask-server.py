@@ -156,32 +156,45 @@ def start_parent_session():
 @app.route('/api/insert-item', methods=['POST'])
 def insert_item():
     data = request.json
-    with pool.connect() as conn:
-        conn.execute(
-            sqlalchemy.text('INSERT INTO SavingsGoal (item, price) VALUES (:item, :price)'), 
-            {'item': data['item'], 'price': data['price']}
-        )
-    return jsonify({'message': 'Item added successfully'})
+    try:
+        with pool.connect() as conn:
+            conn.execute(
+                sqlalchemy.text('INSERT INTO SavingsGoal (item, price) VALUES (:item, :price)'), 
+                {'item': data['item'], 'price': data['price']}
+            )
+        return jsonify({'message': 'Item added successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/insert-chore', methods=['POST'])
 def insert_chore():
     data = request.json
-    with pool.connect() as conn:
-        conn.execute(
-            sqlalchemy.text('INSERT INTO Chore (name, compensation, status) VALUES (:name, :compensation, FALSE)'), 
-            {'name': data['name'], 'compensation': data['compensation']}
-        )
-    return jsonify({'message': 'Chore added successfully'})
+    try:
+        with pool.connect() as conn:
+            conn.execute(
+                sqlalchemy.text('INSERT INTO Chore (name, compensation, status) VALUES (:name, :compensation, FALSE)'), 
+                {'name': data['name'], 'compensation': data['compensation']}
+            )
+        return jsonify({'message': 'Chore added successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/insert-allowance', methods=['POST'])
 def insert_allowance():
     data = request.json
-    with pool.connect() as conn:
-        conn.execute(
-            sqlalchemy.text('INSERT INTO Allowance (amount) VALUES (:amount)'), 
-            {'amount': data['amount']}
-        )
-    return jsonify({'message': 'Allowance added successfully'})
+    try:
+        with pool.connect() as conn:
+            conn.execute(
+                sqlalchemy.text('INSERT INTO Allowance (amount) VALUES (:amount)'), 
+                {'amount': data['amount']}
+            )
+            conn.commit()  # Commit the transaction
+        return jsonify({'message': 'Allowance added successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/mark-chore-complete', methods=['POST'])
 def mark_chore_complete():
@@ -234,18 +247,30 @@ def get_allowance():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/api/get-chores', methods=['GET'])
 def get_chores():
     try:
         with pool.connect() as conn:
-            chores = conn.execute(
-                sqlalchemy.text('SELECT id, name, compensation, status FROM Chore')
-            ).fetchall()
-            return jsonify([{'id': chore['id'], 'name': chore['name'], 
-                            'compensation': float(chore['compensation']), 
-                            'isComplete': chore['status']} for chore in chores])
+            ids = conn.execute(sqlalchemy.text('SELECT id FROM Chore')).fetchall()
+            names = conn.execute(sqlalchemy.text('SELECT name FROM Chore')).fetchall()
+            compensations = conn.execute(sqlalchemy.text('SELECT compensation FROM Chore')).fetchall()
+            statuses = conn.execute(sqlalchemy.text('SELECT status FROM Chore')).fetchall()
+
+            chores = []
+            for i in range(len(ids)):
+                chore = {
+                    'id': ids[i][0],
+                    'name': names[i][0],
+                    'compensation': float(compensations[i][0]),
+                    'isComplete': bool(statuses[i][0])
+                }
+                chores.append(chore)
+
+            return jsonify(chores)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 
 @app.route('/api/get-total-balance', methods=['GET'])

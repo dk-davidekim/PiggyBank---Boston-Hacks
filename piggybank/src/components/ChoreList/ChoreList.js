@@ -4,6 +4,7 @@ import axios from 'axios';
 const ChoreList = () => {
     const [chores, setChores] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         axios.get('http://localhost:8080/api/get-chores')
@@ -11,11 +12,19 @@ const ChoreList = () => {
                 setChores(response.data);
                 setIsLoading(false);
             })
-            .catch(error => console.error('Error fetching chores:', error));
+            .catch(error => {
+                console.error('Error fetching chores:', error);
+                setError('Failed to load chores.');
+                setIsLoading(false);
+            });
     }, []);
 
     if (isLoading) {
         return <div>Loading chores...</div>;
+    }
+
+    if (error) {
+        return <div>Error: {error}</div>;
     }
 
     return (
